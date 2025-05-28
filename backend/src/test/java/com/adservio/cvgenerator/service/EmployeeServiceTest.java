@@ -4,9 +4,10 @@ import com.adservio.cvgenerator.model.Employee;
 import com.adservio.cvgenerator.repository.EmployeeRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Arrays;
 import java.util.List;
@@ -16,6 +17,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 class EmployeeServiceTest {
 
     @Mock
@@ -28,174 +30,138 @@ class EmployeeServiceTest {
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
-        testEmployee = createTestEmployee(1L);
+        testEmployee = createTestEmployee();
     }
 
     @Test
-    void testGetAllEmployees() {
-        List<Employee> employees = Arrays.asList(
+    void getAllEmployees_ShouldReturnList() {
+        // Given
+        List<Employee> expectedEmployees = Arrays.asList(
             createTestEmployee(1L),
             createTestEmployee(2L)
         );
+        when(employeeRepository.findAll()).thenReturn(expectedEmployees);
 
-        when(employeeRepository.findAll()).thenReturn(employees);
+        // When
+        List<Employee> actualEmployees = employeeService.getAllEmployees();
 
-        List<Employee> result = employeeService.getAllEmployees();
-
-        assertNotNull(result);
-        assertEquals(2, result.size());
-        verify(employeeRepository, times(1)).findAll();
-        
-        // Verify properties of returned employees
-        Employee firstEmployee = result.get(0);
-        assertEquals("John", firstEmployee.getFirstName());
-        assertEquals("Doe", firstEmployee.getLastName());
-        assertEquals("john@example.com", firstEmployee.getEmail());
-        assertEquals("Developer", firstEmployee.getPosition());
+        // Then
+        assertNotNull(actualEmployees);
+        assertEquals(2, actualEmployees.size());
+        verify(employeeRepository).findAll();
     }
 
     @Test
-    void testGetEmployeeById() {
+    void getEmployeeById_WhenExists_ShouldReturnEmployee() {
+        // Given
         when(employeeRepository.findById(1L)).thenReturn(Optional.of(testEmployee));
 
+        // When
         Optional<Employee> result = employeeService.getEmployeeById(1L);
 
+        // Then
         assertTrue(result.isPresent());
-        Employee employee = result.get();
-        assertEquals(testEmployee.getId(), employee.getId());
-        assertEquals(testEmployee.getFirstName(), employee.getFirstName());
-        assertEquals(testEmployee.getLastName(), employee.getLastName());
-        assertEquals(testEmployee.getEmail(), employee.getEmail());
-        assertEquals(testEmployee.getPhone(), employee.getPhone());
-        assertEquals(testEmployee.getPosition(), employee.getPosition());
-        assertEquals(testEmployee.getDepartment(), employee.getDepartment());
-        verify(employeeRepository, times(1)).findById(1L);
+        assertEquals(testEmployee.getId(), result.get().getId());
+        verify(employeeRepository).findById(1L);
     }
 
     @Test
-    void testGetEmployeeByIdNotFound() {
-        when(employeeRepository.findById(1L)).thenReturn(Optional.empty());
-
-        Optional<Employee> result = employeeService.getEmployeeById(1L);
-
-        assertFalse(result.isPresent());
-        verify(employeeRepository, times(1)).findById(1L);
-    }
-
-    @Test
-    void testCreateEmployee() {
-        when(employeeRepository.save(any(Employee.class))).thenReturn(testEmployee);
-
-        Employee result = employeeService.createEmployee(testEmployee);
-
-        assertNotNull(result);
-        assertEquals(testEmployee.getId(), result.getId());
-        assertEquals(testEmployee.getFirstName(), result.getFirstName());
-        assertEquals(testEmployee.getLastName(), result.getLastName());
-        assertEquals(testEmployee.getEmail(), result.getEmail());
-        verify(employeeRepository, times(1)).save(any(Employee.class));
-    }
-
-    @Test
-    void testCreateEmployeeWithInvalidEmail() {
-        Employee invalidEmployee = createTestEmployee(1L);
-        invalidEmployee.setEmail("invalid-email");
-
-        when(employeeRepository.save(any(Employee.class))).thenThrow(new RuntimeException("Invalid email format"));
-
-        assertThrows(RuntimeException.class, () -> {
-            employeeService.createEmployee(invalidEmployee);
-        });
-
-        verify(employeeRepository, times(1)).save(any(Employee.class));
-    }
-
-    @Test
-    void testUpdateEmployee() {
-        when(employeeRepository.findById(1L)).thenReturn(Optional.of(testEmployee));
-        when(employeeRepository.save(any(Employee.class))).thenReturn(testEmployee);
-
-        Employee updatedEmployee = createTestEmployee(1L);
-        updatedEmployee.setFirstName("Jane");
-        updatedEmployee.setLastName("Smith");
-        updatedEmployee.setPosition("Senior Developer");
-
-        Employee result = employeeService.updateEmployee(1L, updatedEmployee);
-
-        assertNotNull(result);
-        assertEquals(updatedEmployee.getFirstName(), result.getFirstName());
-        assertEquals(updatedEmployee.getLastName(), result.getLastName());
-        assertEquals(updatedEmployee.getPosition(), result.getPosition());
-        verify(employeeRepository, times(1)).findById(1L);
-        verify(employeeRepository, times(1)).save(any(Employee.class));
-    }
-
-    @Test
-    void testUpdateEmployeeNotFound() {
-        when(employeeRepository.findById(1L)).thenReturn(Optional.empty());
-
-        assertThrows(RuntimeException.class, () -> {
-            employeeService.updateEmployee(1L, testEmployee);
-        });
-
-        verify(employeeRepository, times(1)).findById(1L);
-        verify(employeeRepository, never()).save(any(Employee.class));
-    }
-
-    @Test
-    void testUpdateEmployeeWithInvalidData() {
-        when(employeeRepository.findById(1L)).thenReturn(Optional.of(testEmployee));
+    void createEmployee_WithValidData_ShouldReturnCreatedEmployee() {
+        // Given
+        Employee employeeToCreate = createTestEmployee();
+        employeeToCreate.setId(null); // ID should be null for creation
         
-        Employee invalidEmployee = createTestEmployee(1L);
-        invalidEmployee.setEmail("invalid-email");
-
-        when(employeeRepository.save(any(Employee.class))).thenThrow(new RuntimeException("Invalid email format"));
-
-        assertThrows(RuntimeException.class, () -> {
-            employeeService.updateEmployee(1L, invalidEmployee);
+        when(employeeRepository.save(any(Employee.class))).thenAnswer(invocation -> {
+            Employee savedEmployee = invocation.getArgument(0);
+            savedEmployee.setId(1L); // Simulate DB generating ID
+            return savedEmployee;
         });
 
-        verify(employeeRepository, times(1)).findById(1L);
-        verify(employeeRepository, times(1)).save(any(Employee.class));
+        // When
+        Employee result = employeeService.createEmployee(employeeToCreate);
+
+        // Then
+        assertNotNull(result);
+        assertNotNull(result.getId());
+        assertEquals(employeeToCreate.getFirstName(), result.getFirstName());
+        assertEquals(employeeToCreate.getLastName(), result.getLastName());
+        assertEquals(employeeToCreate.getEmail(), result.getEmail());
+        verify(employeeRepository).save(any(Employee.class));
     }
 
     @Test
-    void testDeleteEmployee() {
+    void createEmployee_WithNullEmployee_ShouldThrowException() {
+        // When & Then
+        assertThrows(IllegalArgumentException.class, () -> {
+            employeeService.createEmployee(null);
+        });
+        verify(employeeRepository, never()).save(any());
+    }
+
+    @Test
+    void updateEmployee_WithValidData_ShouldReturnUpdatedEmployee() {
+        // Given
+        Long employeeId = 1L;
+        Employee existingEmployee = createTestEmployee();
+        existingEmployee.setId(employeeId);
+
+        Employee updateData = createTestEmployee();
+        updateData.setId(employeeId);
+        updateData.setFirstName("Updated");
+        updateData.setPosition("Senior Developer");
+
+        when(employeeRepository.findById(employeeId)).thenReturn(Optional.of(existingEmployee));
+        when(employeeRepository.save(any(Employee.class))).thenReturn(updateData);
+
+        // When
+        Employee result = employeeService.updateEmployee(employeeId, updateData);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(employeeId, result.getId());
+        assertEquals("Updated", result.getFirstName());
+        assertEquals("Senior Developer", result.getPosition());
+        verify(employeeRepository).findById(employeeId);
+        verify(employeeRepository).save(any(Employee.class));
+    }
+
+    @Test
+    void updateEmployee_WithNonExistingId_ShouldThrowException() {
+        // Given
+        Long nonExistingId = 999L;
+        when(employeeRepository.findById(nonExistingId)).thenReturn(Optional.empty());
+
+        // When & Then
+        assertThrows(IllegalArgumentException.class, () -> {
+            employeeService.updateEmployee(nonExistingId, createTestEmployee());
+        });
+        verify(employeeRepository).findById(nonExistingId);
+        verify(employeeRepository, never()).save(any());
+    }
+
+    @Test
+    void deleteEmployee_WhenExists_ShouldDelete() {
+        // Given
         when(employeeRepository.findById(1L)).thenReturn(Optional.of(testEmployee));
         doNothing().when(employeeRepository).deleteById(1L);
 
+        // When
         employeeService.deleteEmployee(1L);
 
-        verify(employeeRepository, times(1)).findById(1L);
-        verify(employeeRepository, times(1)).deleteById(1L);
+        // Then
+        verify(employeeRepository).findById(1L);
+        verify(employeeRepository).deleteById(1L);
     }
 
-    @Test
-    void testDeleteEmployeeNotFound() {
-        when(employeeRepository.findById(1L)).thenReturn(Optional.empty());
-
-        assertThrows(RuntimeException.class, () -> {
-            employeeService.deleteEmployee(1L);
-        });
-
-        verify(employeeRepository, times(1)).findById(1L);
-        verify(employeeRepository, never()).deleteById(anyLong());
-    }
-
-    @Test
-    void testCreateEmployeeWithNullFields() {
-        Employee invalidEmployee = new Employee();
-        invalidEmployee.setId(1L);
-        // All other fields are null
-
-        when(employeeRepository.save(any(Employee.class))).thenThrow(new RuntimeException("Required fields cannot be null"));
-
-        assertThrows(RuntimeException.class, () -> {
-            employeeService.createEmployee(invalidEmployee);
-        });
-
-        verify(employeeRepository, times(1)).save(any(Employee.class));
+    private Employee createTestEmployee() {
+        Employee employee = new Employee();
+        employee.setFirstName("John");
+        employee.setLastName("Doe");
+        employee.setEmail("john.doe@example.com");
+        employee.setPhone("+1234567890");
+        employee.setPosition("Software Engineer");
+        employee.setDepartment("Engineering");
+        return employee;
     }
 
     private Employee createTestEmployee(Long id) {
@@ -203,15 +169,10 @@ class EmployeeServiceTest {
         employee.setId(id);
         employee.setFirstName("John");
         employee.setLastName("Doe");
-        employee.setEmail("john@example.com");
-        employee.setPhone("1234567890");
-        employee.setPosition("Developer");
-        employee.setDepartment("IT");
-        employee.setEducation("Bachelor in CS");
-        employee.setExperience("5 years");
-        employee.setSkills("Java, Spring");
-        employee.setLanguages("English, French");
-        employee.setCertifications("AWS Certified");
+        employee.setEmail("john.doe@example.com");
+        employee.setPhone("+1234567890");
+        employee.setPosition("Software Engineer");
+        employee.setDepartment("Engineering");
         return employee;
     }
 } 

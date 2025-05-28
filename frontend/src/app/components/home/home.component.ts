@@ -9,11 +9,15 @@ import { Router } from '@angular/router';
 export class HomeComponent {
   constructor(private router: Router) {}
 
-  public navigateToEmployees(): void {
+  navigateToEmployees(): void {
     this.router.navigate(['/employees']);
   }
 
-  public navigateToStatistics(): void {
+  navigateToNewEmployee(): void {
+    this.router.navigate(['/employee/add']);
+  }
+
+  navigateToStatistics(): void {
     this.router.navigate(['/statistics']);
   }
 } 

@@ -1,222 +1,335 @@
-<div class="container mt-4">
+<div class="container py-4">
+  <!-- En-tête avec titre et bouton d'ajout -->
   <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>Liste des Employés</h2>
+    <h2 class="mb-0">Liste des Employés</h2>
     <button class="btn btn-primary" routerLink="/employee-form">
-      <i class="bi bi-plus-circle"></i> Nouvel Employé
+      <i class="bi bi-plus-lg"></i> Ajouter un employé
     </button>
   </div>
 
-  <div class="table-responsive">
-    <table class="table table-hover">
-      <thead>
-        <tr>
-          <th>Nom</th>
-          <th>Poste</th>
-          <th>Département</th>
-          <th>Email</th>
-          <th>Téléphone</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let employee of displayedEmployees" 
-            (click)="viewEmployee(employee.id!)" 
-            class="clickable-row"
-            [class.selected]="selectedEmployee?.id === employee.id">
-          <td>
+  <!-- Carte principale -->
+  <div class="card">
+    <div class="card-body p-0">
+      <!-- Message d'erreur -->
+      <div *ngIf="error" class="alert alert-danger m-3">
+        {{error}}
+      </div>
+
+      <!-- État de chargement -->
+      <div *ngIf="loading" class="text-center p-4">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Chargement...</span>
+        </div>
+        <p class="mt-2 text-muted">Chargement des employés...</p>
+      </div>
+
+      <!-- Table des employés -->
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Nom</th>
+              <th>Email</th>
+              <th>Poste</th>
+              <th>Département</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let employee of displayedEmployees">
+              <td>
+                <div class="d-flex align-items-center">
+                  <i class="bi bi-person-circle me-2"></i>
+                  {{employee.firstName}} {{employee.lastName}}
+                </div>
+              </td>
+              <td>{{employee.email}}</td>
+              <td>{{employee.position}}</td>
+              <td>{{employee.department}}</td>
+              <td>
+                <div class="btn-group">
+                  <button class="btn btn-sm btn-outline-primary" 
+                          (click)="editEmployee(employee.id!)"
+                          title="Modifier">
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                  <button class="btn btn-sm btn-outline-danger" 
+                          (click)="deleteEmployee(employee)"
+                          title="Supprimer">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                  <button class="btn btn-sm btn-outline-success" 
+                          (click)="generateCV(employee)"
+                          title="Générer CV">
+                    <i class="bi bi-file-earmark-pdf"></i>
+                  </button>
+                  <button class="btn btn-sm btn-outline-info" 
+                          (click)="viewEmployee(employee.id!)"
+                          title="Voir détails">
+                    <i class="bi bi-eye"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- État vide -->
+        <div *ngIf="!loading && displayedEmployees.length === 0" class="text-center p-4 text-muted">
+          <i class="bi bi-people fs-1"></i>
+          <p class="mt-2">Aucun employé trouvé</p>
+        </div>
+
+        <!-- Pagination -->
+        <div class="d-flex justify-content-between align-items-center p-3 border-top" *ngIf="totalItems > 0">
+          <div class="d-flex align-items-center gap-3">
             <div class="d-flex align-items-center">
-              <i class="bi bi-person-circle me-2"></i>
-              {{ employee.firstName }} {{ employee.lastName }}
+              <select id="pageSize" class="form-select form-select-sm" 
+                      [(ngModel)]="pageSize" 
+                      (change)="onPageSizeChange()">
+                <option *ngFor="let size of pageSizeOptions" [value]="size">
+                  {{size}} par page
+                </option>
+              </select>
             </div>
-          </td>
-          <td>{{ employee.position }}</td>
-          <td>{{ employee.department }}</td>
-          <td>{{ employee.email }}</td>
-          <td>{{ employee.phone }}</td>
-          <td>
-            <div class="btn-group">
-              <button class="btn btn-sm btn-primary" (click)="editEmployee(employee.id!)">
-                <i class="bi bi-pencil"></i>
-              </button>
-              <button class="btn btn-sm btn-danger" (click)="confirmDelete(employee)">
-                <i class="bi bi-trash"></i>
-              </button>
-              <button class="btn btn-sm btn-success" (click)="downloadCV(employee)">
-                <i class="bi bi-file-pdf"></i>
-              </button>
-            </div>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-
-  <!-- Pagination -->
-  <div class="d-flex justify-content-between align-items-center mt-4">
-    <div class="text-muted">
-      Page {{ currentPage }} sur {{ totalPages }}
-    </div>
-    <nav aria-label="Navigation des pages">
-      <ul class="pagination mb-0">
-        <!-- Première page -->
-        <li class="page-item" [class.disabled]="currentPage === 1">
-          <button class="page-link" (click)="onPageChange(1)" [disabled]="currentPage === 1">
-            <i class="bi bi-chevron-double-left"></i>
-          </button>
-        </li>
-        <!-- Page précédente -->
-        <li class="page-item" [class.disabled]="currentPage === 1">
-          <button class="page-link" (click)="onPageChange(currentPage - 1)" [disabled]="currentPage === 1">
-            <i class="bi bi-chevron-left"></i>
-          </button>
-        </li>
-        
-        <!-- Numéros de pages -->
-        <ng-container *ngFor="let page of getPageNumbers()">
-          <li class="page-item" [class.active]="page === currentPage">
-            <button class="page-link" (click)="onPageChange(page)">{{ page }}</button>
-          </li>
-        </ng-container>
-
-        <!-- Page suivante -->
-        <li class="page-item" [class.disabled]="currentPage === totalPages">
-          <button class="page-link" (click)="onPageChange(currentPage + 1)" [disabled]="currentPage === totalPages">
-            <i class="bi bi-chevron-right"></i>
-          </button>
-        </li>
-        <!-- Dernière page -->
-        <li class="page-item" [class.disabled]="currentPage === totalPages">
-          <button class="page-link" (click)="onPageChange(totalPages)" [disabled]="currentPage === totalPages">
-            <i class="bi bi-chevron-double-right"></i>
-          </button>
-        </li>
-      </ul>
-    </nav>
-  </div>
-
-  <!-- Modal pour afficher les détails de l'employé -->
-  <div class="modal fade show" [class.d-block]="showDetailsModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog modal-lg">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">
-            <i class="bi bi-person-circle"></i>
-            Détails de l'employé
-          </h5>
-          <button type="button" class="btn-close" (click)="closeDetailsModal()" aria-label="Close"></button>
-        </div>
-        <div class="modal-body" *ngIf="selectedEmployee">
-          <div class="row">
-            <div class="col-md-6">
-              <div class="info-section">
-                <h6 class="section-title">
-                  <i class="bi bi-person"></i> Informations Personnelles
-                </h6>
-                <p><strong>Nom:</strong> {{ selectedEmployee.lastName }}</p>
-                <p><strong>Prénom:</strong> {{ selectedEmployee.firstName }}</p>
-                <p><strong>Email:</strong> {{ selectedEmployee.email }}</p>
-                <p><strong>Téléphone:</strong> {{ selectedEmployee.phone }}</p>
-              </div>
-            </div>
-            <div class="col-md-6">
-              <div class="info-section">
-                <h6 class="section-title">
-                  <i class="bi bi-briefcase"></i> Informations Professionnelles
-                </h6>
-                <p><strong>Poste:</strong> {{ selectedEmployee.position }}</p>
-                <p><strong>Département:</strong> {{ selectedEmployee.department }}</p>
-              </div>
+            <div class="text-muted small">
+              Affichage <strong>{{startIndex + 1}}-{{endIndex}}</strong> sur <strong>{{totalItems}}</strong> employés
             </div>
           </div>
-          <div class="row mt-4">
-            <div class="col-12">
-              <div class="info-section">
-                <h6 class="section-title">
-                  <i class="bi bi-mortarboard"></i> Formation
-                </h6>
-                <div class="content-box">{{ selectedEmployee.education }}</div>
-              </div>
-            </div>
-          </div>
-          <div class="row mt-4">
-            <div class="col-12">
-              <div class="info-section">
-                <h6 class="section-title">
-                  <i class="bi bi-briefcase"></i> Expérience
-                </h6>
-                <div class="content-box">{{ selectedEmployee.experience }}</div>
-              </div>
-            </div>
-          </div>
-          <div class="row mt-4">
-            <div class="col-12">
-              <div class="info-section">
-                <h6 class="section-title">
-                  <i class="bi bi-tools"></i> Compétences
-                </h6>
-                <div class="content-box">{{ selectedEmployee.skills }}</div>
-              </div>
-            </div>
-          </div>
-          <div class="row mt-4">
-            <div class="col-12">
-              <div class="info-section">
-                <h6 class="section-title">
-                  <i class="bi bi-translate"></i> Langues
-                </h6>
-                <div class="content-box">{{ selectedEmployee.languages }}</div>
-              </div>
-            </div>
-          </div>
-          <div class="row mt-4">
-            <div class="col-12">
-              <div class="info-section">
-                <h6 class="section-title">
-                  <i class="bi bi-award"></i> Certifications
-                </h6>
-                <div class="content-box">{{ selectedEmployee.certifications }}</div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" (click)="closeDetailsModal()">
-            <i class="bi bi-x-lg"></i> Fermer
-          </button>
-          <button type="button" class="btn btn-primary" (click)="editEmployee(selectedEmployee?.id!)" *ngIf="selectedEmployee?.id">
-            <i class="bi bi-pencil"></i> Modifier
-          </button>
+          
+          <nav aria-label="Navigation des pages" *ngIf="totalPages > 1">
+            <ul class="pagination pagination-sm mb-0">
+              <!-- Première page -->
+              <li class="page-item" [class.disabled]="currentPage === 1">
+                <a class="page-link" href="javascript:void(0)" 
+                   (click)="onPageChange(1)"
+                   aria-label="Première page">
+                  <i class="bi bi-chevron-double-left"></i>
+                </a>
+              </li>
+              
+              <!-- Page précédente -->
+              <li class="page-item" [class.disabled]="currentPage === 1">
+                <a class="page-link" href="javascript:void(0)" 
+                   (click)="onPageChange(currentPage - 1)"
+                   aria-label="Page précédente">
+                  <i class="bi bi-chevron-left"></i>
+                </a>
+              </li>
+              
+              <!-- Numéros de page -->
+              <ng-container *ngFor="let page of getPageNumbers()">
+                <li class="page-item" *ngIf="page !== -1" [class.active]="page === currentPage">
+                  <a class="page-link" href="javascript:void(0)" (click)="onPageChange(page)">
+                    {{page}}
+                  </a>
+                </li>
+                <li class="page-item disabled" *ngIf="page === -1">
+                  <span class="page-link">...</span>
+                </li>
+              </ng-container>
+              
+              <!-- Page suivante -->
+              <li class="page-item" [class.disabled]="currentPage === totalPages">
+                <a class="page-link" href="javascript:void(0)" 
+                   (click)="onPageChange(currentPage + 1)"
+                   aria-label="Page suivante">
+                  <i class="bi bi-chevron-right"></i>
+                </a>
+              </li>
+              
+              <!-- Dernière page -->
+              <li class="page-item" [class.disabled]="currentPage === totalPages">
+                <a class="page-link" href="javascript:void(0)" 
+                   (click)="onPageChange(totalPages)"
+                   aria-label="Dernière page">
+                  <i class="bi bi-chevron-double-right"></i>
+                </a>
+              </li>
+            </ul>
+          </nav>
         </div>
       </div>
     </div>
   </div>
-  <div class="modal-backdrop fade show" *ngIf="showDetailsModal"></div>
+</div>
 
-  <!-- Modal de confirmation de suppression -->
-  <div class="modal fade show" [class.d-block]="showDeleteModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">
-            <i class="bi bi-exclamation-triangle text-danger"></i>
-            Confirmation de suppression
-          </h5>
-          <button type="button" class="btn-close" (click)="closeDeleteModal()" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <p>Êtes-vous sûr de vouloir supprimer l'employé <strong>{{ employeeToDelete?.firstName }} {{ employeeToDelete?.lastName }}</strong> ?</p>
-          <p class="text-danger">Cette action est irréversible.</p>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" (click)="closeDeleteModal()">
-            <i class="bi bi-x-lg"></i> Annuler
-          </button>
-          <button type="button" class="btn btn-danger" (click)="deleteEmployee()">
-            <i class="bi bi-trash3"></i> Supprimer
-          </button>
-        </div>
+<!-- Modal de confirmation de suppression -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Confirmer la suppression</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p class="text-danger">
+          <i class="bi bi-exclamation-triangle-fill me-2"></i>
+          Attention ! Cette action est irréversible.
+        </p>
+        <p>Êtes-vous sûr de vouloir supprimer cet employé ?</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+        <button type="button" class="btn btn-danger" (click)="confirmDelete()">
+          <i class="bi bi-trash me-1"></i> Supprimer
+        </button>
       </div>
     </div>
   </div>
-  <div class="modal-backdrop fade show" *ngIf="showDeleteModal"></div>
+</div>
+
+<!-- Modal de détails de l'employé -->
+<div class="modal fade" [class.show]="showDetailsModal" [class.d-block]="showDetailsModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="bi bi-person-circle me-2"></i>
+          Détails de l'employé
+        </h5>
+        <button type="button" class="btn-close" (click)="closeDetailsModal()"></button>
+      </div>
+      <div class="modal-body" *ngIf="selectedEmployee">
+        <div class="row">
+          <div class="col-md-6">
+            <div class="info-section">
+              <h6 class="section-title">
+                <i class="bi bi-person"></i> Informations Personnelles
+              </h6>
+              <p><strong>Nom:</strong> {{selectedEmployee.lastName}}</p>
+              <p><strong>Prénom:</strong> {{selectedEmployee.firstName}}</p>
+              <p><strong>Email:</strong> {{selectedEmployee.email}}</p>
+              <p><strong>Téléphone:</strong> {{selectedEmployee.phone}}</p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-section">
+              <h6 class="section-title">
+                <i class="bi bi-briefcase"></i> Informations Professionnelles
+              </h6>
+              <p><strong>Poste:</strong> {{selectedEmployee.position}}</p>
+              <p><strong>Département:</strong> {{selectedEmployee.department}}</p>
+            </div>
+          </div>
+        </div>
+        <div class="row mt-4">
+          <div class="col-12">
+            <div class="detail-section">
+              <h5 class="section-title">
+                <i class="bi bi-mortarboard me-2"></i>
+                Formation
+              </h5>
+              <div class="content-box">
+                <div *ngIf="selectedEmployee.educationList && selectedEmployee.educationList.length > 0; else noEducation">
+                  <div *ngFor="let edu of selectedEmployee.educationList" class="mb-3">
+                    <h6>{{edu.degree}}</h6>
+                    <p class="mb-1"><strong>École :</strong> {{edu.school}}</p>
+                    <p class="mb-1"><strong>Période :</strong> {{edu.startYear}} - {{edu.endYear}}</p>
+                    <p class="mb-0" *ngIf="edu.description">{{edu.description}}</p>
+                  </div>
+                </div>
+                <ng-template #noEducation>
+                  <p class="text-muted mb-0">Aucune formation renseignée</p>
+                </ng-template>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row mt-4">
+          <div class="col-12">
+            <div class="detail-section">
+              <h5 class="section-title">
+                <i class="bi bi-briefcase me-2"></i>
+                Expérience Professionnelle
+              </h5>
+              <div class="content-box">
+                <div *ngIf="selectedEmployee.experienceList && selectedEmployee.experienceList.length > 0; else noExperience">
+                  <div *ngFor="let exp of selectedEmployee.experienceList" class="mb-3">
+                    <h6>{{exp.title}} - {{exp.company}}</h6>
+                    <p class="mb-1"><strong>Période :</strong> {{exp.startDate | date}} - {{exp.endDate | date}}</p>
+                    <p class="mb-1" *ngIf="exp.description">{{exp.description}}</p>
+                    <p class="mb-0" *ngIf="exp.technologies"><strong>Technologies :</strong> {{exp.technologies}}</p>
+                  </div>
+                </div>
+                <ng-template #noExperience>
+                  <p class="text-muted mb-0">Aucune expérience renseignée</p>
+                </ng-template>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row mt-4">
+          <div class="col-12">
+            <div class="detail-section">
+              <h5 class="section-title">
+                <i class="bi bi-tools me-2"></i>
+                Compétences
+              </h5>
+              <div class="content-box">
+                <div *ngIf="selectedEmployee.skillsList && selectedEmployee.skillsList.length > 0; else noSkills">
+                  <div *ngFor="let skill of selectedEmployee.skillsList" class="mb-2">
+                    <strong>{{skill.name}}</strong> - {{skill.level}}
+                  </div>
+                </div>
+                <ng-template #noSkills>
+                  <p class="text-muted mb-0">Aucune compétence renseignée</p>
+                </ng-template>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row mt-4">
+          <div class="col-12">
+            <div class="detail-section">
+              <h5 class="section-title">
+                <i class="bi bi-translate me-2"></i>
+                Langues
+              </h5>
+              <div class="content-box">
+                <div *ngIf="selectedEmployee.languagesList && selectedEmployee.languagesList.length > 0; else noLanguages">
+                  <div *ngFor="let lang of selectedEmployee.languagesList" class="mb-2">
+                    <strong>{{lang.name}}</strong> - {{lang.level}}
+                  </div>
+                </div>
+                <ng-template #noLanguages>
+                  <p class="text-muted mb-0">Aucune langue renseignée</p>
+                </ng-template>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row mt-4">
+          <div class="col-12">
+            <div class="detail-section">
+              <h5 class="section-title">
+                <i class="bi bi-award me-2"></i>
+                Certifications
+              </h5>
+              <div class="content-box">
+                <div *ngIf="selectedEmployee.certificationsList && selectedEmployee.certificationsList.length > 0; else noCertifications">
+                  <div *ngFor="let cert of selectedEmployee.certificationsList" class="mb-3">
+                    <h6>{{cert.name}}</h6>
+                    <p class="mb-1"><strong>Organisme :</strong> {{cert.organization}}</p>
+                    <p class="mb-0">
+                      <strong>Obtenue le :</strong> {{cert.dateObtained | date}}
+                      <span *ngIf="cert.expiryDate">
+                        - <strong>Expire le :</strong> {{cert.expiryDate | date}}
+                      </span>
+                    </p>
+                  </div>
+                </div>
+                <ng-template #noCertifications>
+                  <p class="text-muted mb-0">Aucune certification renseignée</p>
+                </ng-template>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeDetailsModal()">Fermer</button>
+      </div>
+    </div>
+  </div>
 </div> 

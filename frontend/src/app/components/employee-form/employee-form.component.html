@@ -1,108 +1,348 @@
-<div class="container mt-4">
-  <h2>{{ isEditMode ? 'Modifier' : 'Nouvel' }} Employé</h2>
-  <form [formGroup]="employeeForm" class="mt-4">
-    <div class="row">
-      <!-- Informations Personnelles -->
-      <div class="col-12">
-        <div class="row">
-          <div class="col-md-6 mb-3">
-            <label for="firstName" class="form-label">Prénom <span class="text-danger">*</span></label>
-            <textarea class="form-control" id="firstName" formControlName="firstName" rows="2"
-                   [class.is-invalid]="employeeForm.get('firstName')?.invalid && employeeForm.get('firstName')?.touched"></textarea>
-            <div class="invalid-feedback" *ngIf="employeeForm.get('firstName')?.touched">
-              {{ getErrorMessage('firstName') }}
+<div class="container py-4">
+  <div class="card">
+    <div class="card-header bg-primary text-white">
+      <h2 class="mb-0">{{isEditMode ? 'Modifier' : 'Ajouter'}} un employé</h2>
+    </div>
+    <div class="card-body">
+      <form [formGroup]="employeeForm" (ngSubmit)="onSubmit()">
+        <!-- Informations Personnelles -->
+        <div class="section-card mb-4">
+          <h3 class="section-title">
+            <i class="bi bi-person-circle me-2"></i>
+            Informations Personnelles
+          </h3>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Prénom *</label>
+              <input type="text" class="form-control" formControlName="firstName">
+              <div class="text-danger" *ngIf="employeeForm.get('firstName')?.invalid && employeeForm.get('firstName')?.touched">
+                Le prénom est requis
+              </div>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Nom *</label>
+              <input type="text" class="form-control" formControlName="lastName">
+              <div class="text-danger" *ngIf="employeeForm.get('lastName')?.invalid && employeeForm.get('lastName')?.touched">
+                Le nom est requis
+              </div>
             </div>
           </div>
-          <div class="col-md-6 mb-3">
-            <label for="lastName" class="form-label">Nom <span class="text-danger">*</span></label>
-            <textarea class="form-control" id="lastName" formControlName="lastName" rows="2"
-                   [class.is-invalid]="employeeForm.get('lastName')?.invalid && employeeForm.get('lastName')?.touched"></textarea>
-            <div class="invalid-feedback" *ngIf="employeeForm.get('lastName')?.touched">
-              {{ getErrorMessage('lastName') }}
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Email *</label>
+              <input type="email" class="form-control" formControlName="email">
+              <div class="text-danger" *ngIf="employeeForm.get('email')?.invalid && employeeForm.get('email')?.touched">
+                Email invalide
+              </div>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Téléphone *</label>
+              <input type="tel" class="form-control" formControlName="phone">
+              <div class="text-danger" *ngIf="employeeForm.get('phone')?.invalid && employeeForm.get('phone')?.touched">
+                Numéro de téléphone invalide
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Date de naissance</label>
+              <input type="date" class="form-control" formControlName="birthDate">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Lieu de naissance</label>
+              <input type="text" class="form-control" formControlName="birthPlace">
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-12 mb-3">
+              <label class="form-label">Adresse</label>
+              <textarea class="form-control" rows="2" formControlName="address"
+                        placeholder="Adresse complète"></textarea>
             </div>
           </div>
         </div>
-        <div class="row">
-          <div class="col-md-6 mb-3">
-            <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
-            <textarea class="form-control" id="email" formControlName="email" rows="2"
-                   [class.is-invalid]="employeeForm.get('email')?.invalid && employeeForm.get('email')?.touched"></textarea>
-            <div class="invalid-feedback" *ngIf="employeeForm.get('email')?.touched">
-              {{ getErrorMessage('email') }}
+
+        <!-- Informations Professionnelles -->
+        <div class="section-card mb-4">
+          <h3 class="section-title">
+            <i class="bi bi-briefcase me-2"></i>
+            Informations Professionnelles
+          </h3>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Poste *</label>
+              <input type="text" class="form-control" formControlName="position">
+              <div class="text-danger" *ngIf="employeeForm.get('position')?.invalid && employeeForm.get('position')?.touched">
+                Le poste est requis
+              </div>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Département *</label>
+              <input type="text" class="form-control" formControlName="department">
+              <div class="text-danger" *ngIf="employeeForm.get('department')?.invalid && employeeForm.get('department')?.touched">
+                Le département est requis
+              </div>
             </div>
           </div>
-          <div class="col-md-6 mb-3">
-            <label for="phone" class="form-label">Téléphone <span class="text-danger">*</span></label>
-            <textarea class="form-control" id="phone" formControlName="phone" rows="2"
-                   [class.is-invalid]="employeeForm.get('phone')?.invalid && employeeForm.get('phone')?.touched"></textarea>
-            <div class="invalid-feedback" *ngIf="employeeForm.get('phone')?.touched">
-              {{ getErrorMessage('phone') }}
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Date d'embauche</label>
+              <input type="date" class="form-control" formControlName="hireDate">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Type de contrat</label>
+              <select class="form-select" formControlName="contractType">
+                <option value="">Sélectionnez un type</option>
+                <option value="CDI">CDI</option>
+                <option value="CDD">CDD</option>
+                <option value="Interim">Intérim</option>
+                <option value="Stage">Stage</option>
+                <option value="Alternance">Alternance</option>
+              </select>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Salaire annuel</label>
+              <input type="number" class="form-control" formControlName="salary"
+                     placeholder="Salaire annuel brut">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Niveau hiérarchique</label>
+              <select class="form-select" formControlName="level">
+                <option value="">Sélectionnez un niveau</option>
+                <option value="Junior">Junior</option>
+                <option value="Intermediaire">Intermédiaire</option>
+                <option value="Senior">Senior</option>
+                <option value="Expert">Expert</option>
+                <option value="Manager">Manager</option>
+              </select>
             </div>
           </div>
         </div>
-      </div>
-    </div>
 
-    <!-- Informations Professionnelles -->
-    <div class="row mt-3">
-      <div class="col-md-6 mb-3">
-        <label for="position" class="form-label">Poste <span class="text-danger">*</span></label>
-        <textarea class="form-control" id="position" formControlName="position" rows="2"
-               [class.is-invalid]="employeeForm.get('position')?.invalid && employeeForm.get('position')?.touched"></textarea>
-        <div class="invalid-feedback" *ngIf="employeeForm.get('position')?.touched">
-          {{ getErrorMessage('position') }}
+        <!-- Formation -->
+        <div class="section-card mb-4">
+          <h3 class="section-title">
+            <i class="bi bi-mortarboard me-2"></i>
+            Formation
+          </h3>
+          <div class="mb-3">
+            <label class="form-label">Diplômes et Formations</label>
+            <div formArrayName="educationList">
+              <div *ngFor="let education of educationList.controls; let i=index" [formGroupName]="i" class="mb-3 p-3 border rounded">
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label">Diplôme/Formation</label>
+                    <input type="text" class="form-control" formControlName="degree">
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label">Établissement</label>
+                    <input type="text" class="form-control" formControlName="school">
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label">Année de début</label>
+                    <input type="number" class="form-control" formControlName="startYear">
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label">Année de fin</label>
+                    <input type="number" class="form-control" formControlName="endYear">
+                  </div>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">Description</label>
+                  <textarea class="form-control" rows="2" formControlName="description"></textarea>
+                </div>
+                <button type="button" class="btn btn-danger btn-sm" (click)="removeEducation(i)">
+                  <i class="bi bi-trash"></i> Supprimer
+                </button>
+              </div>
+            </div>
+            <button type="button" class="btn btn-outline-primary mt-2" (click)="addEducation()">
+              <i class="bi bi-plus-circle"></i> Ajouter une formation
+            </button>
+          </div>
         </div>
-      </div>
-      <div class="col-md-6 mb-3">
-        <label for="department" class="form-label">Département <span class="text-danger">*</span></label>
-        <textarea class="form-control" id="department" formControlName="department" rows="2"
-               [class.is-invalid]="employeeForm.get('department')?.invalid && employeeForm.get('department')?.touched"></textarea>
-        <div class="invalid-feedback" *ngIf="employeeForm.get('department')?.touched">
-          {{ getErrorMessage('department') }}
+
+        <!-- Expérience -->
+        <div class="section-card mb-4">
+          <h3 class="section-title">
+            <i class="bi bi-briefcase me-2"></i>
+            Expérience Professionnelle
+          </h3>
+          <div class="mb-3">
+            <div formArrayName="experienceList">
+              <div *ngFor="let experience of experienceList.controls; let i=index" [formGroupName]="i" class="mb-3 p-3 border rounded">
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label">Poste occupé</label>
+                    <input type="text" class="form-control" formControlName="title">
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label">Entreprise</label>
+                    <input type="text" class="form-control" formControlName="company">
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label">Date de début</label>
+                    <input type="date" class="form-control" formControlName="startDate">
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label">Date de fin</label>
+                    <input type="date" class="form-control" formControlName="endDate">
+                  </div>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">Description des responsabilités</label>
+                  <textarea class="form-control" rows="3" formControlName="description"></textarea>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">Technologies utilisées</label>
+                  <input type="text" class="form-control" formControlName="technologies"
+                         placeholder="Séparez les technologies par des virgules">
+                </div>
+                <button type="button" class="btn btn-danger btn-sm" (click)="removeExperience(i)">
+                  <i class="bi bi-trash"></i> Supprimer
+                </button>
+              </div>
+            </div>
+            <button type="button" class="btn btn-outline-primary mt-2" (click)="addExperience()">
+              <i class="bi bi-plus-circle"></i> Ajouter une expérience
+            </button>
+          </div>
         </div>
-      </div>
-    </div>
 
-    <!-- Formation -->
-    <div class="mb-3">
-      <label for="education" class="form-label">Formation</label>
-      <textarea class="form-control" id="education" rows="5" formControlName="education"></textarea>
-    </div>
+        <!-- Compétences -->
+        <div class="section-card mb-4">
+          <h3 class="section-title">
+            <i class="bi bi-tools me-2"></i>
+            Compétences
+          </h3>
+          <div class="mb-3">
+            <label class="form-label">Compétences Techniques</label>
+            <div formArrayName="skillsList">
+              <div *ngFor="let skill of skillsList.controls; let i=index" [formGroupName]="i" class="mb-3 p-3 border rounded">
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label">Compétence</label>
+                    <input type="text" class="form-control" formControlName="name">
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label">Niveau</label>
+                    <select class="form-select" formControlName="level">
+                      <option value="Débutant">Débutant</option>
+                      <option value="Intermédiaire">Intermédiaire</option>
+                      <option value="Avancé">Avancé</option>
+                      <option value="Expert">Expert</option>
+                    </select>
+                  </div>
+                </div>
+                <button type="button" class="btn btn-danger btn-sm" (click)="removeSkill(i)">
+                  <i class="bi bi-trash"></i> Supprimer
+                </button>
+              </div>
+            </div>
+            <button type="button" class="btn btn-outline-primary mt-2" (click)="addSkill()">
+              <i class="bi bi-plus-circle"></i> Ajouter une compétence
+            </button>
+          </div>
+        </div>
 
-    <!-- Expérience -->
-    <div class="mb-3">
-      <label for="experience" class="form-label">Expérience</label>
-      <textarea class="form-control" id="experience" rows="5" formControlName="experience"></textarea>
-    </div>
+        <!-- Langues -->
+        <div class="section-card mb-4">
+          <h3 class="section-title">
+            <i class="bi bi-translate me-2"></i>
+            Langues
+          </h3>
+          <div class="mb-3">
+            <div formArrayName="languagesList">
+              <div *ngFor="let language of languagesList.controls; let i=index" [formGroupName]="i" class="mb-3 p-3 border rounded">
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label">Langue</label>
+                    <input type="text" class="form-control" formControlName="name">
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label">Niveau</label>
+                    <select class="form-select" formControlName="level">
+                      <option value="A1">A1 - Débutant</option>
+                      <option value="A2">A2 - Élémentaire</option>
+                      <option value="B1">B1 - Intermédiaire</option>
+                      <option value="B2">B2 - Intermédiaire supérieur</option>
+                      <option value="C1">C1 - Avancé</option>
+                      <option value="C2">C2 - Maîtrise</option>
+                      <option value="Native">Langue maternelle</option>
+                    </select>
+                  </div>
+                </div>
+                <button type="button" class="btn btn-danger btn-sm" (click)="removeLanguage(i)">
+                  <i class="bi bi-trash"></i> Supprimer
+                </button>
+              </div>
+            </div>
+            <button type="button" class="btn btn-outline-primary mt-2" (click)="addLanguage()">
+              <i class="bi bi-plus-circle"></i> Ajouter une langue
+            </button>
+          </div>
+        </div>
 
-    <!-- Compétences -->
-    <div class="mb-3">
-      <label for="skills" class="form-label">Compétences</label>
-      <textarea class="form-control" id="skills" rows="5" formControlName="skills"></textarea>
-    </div>
+        <!-- Certifications -->
+        <div class="section-card mb-4">
+          <h3 class="section-title">
+            <i class="bi bi-award me-2"></i>
+            Certifications
+          </h3>
+          <div class="mb-3">
+            <div formArrayName="certificationsList">
+              <div *ngFor="let certification of certificationsList.controls; let i=index" [formGroupName]="i" class="mb-3 p-3 border rounded">
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label">Nom de la certification</label>
+                    <input type="text" class="form-control" formControlName="name">
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label">Organisme</label>
+                    <input type="text" class="form-control" formControlName="organization">
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label">Date d'obtention</label>
+                    <input type="date" class="form-control" formControlName="dateObtained">
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label">Date d'expiration</label>
+                    <input type="date" class="form-control" formControlName="expiryDate">
+                  </div>
+                </div>
+                <button type="button" class="btn btn-danger btn-sm" (click)="removeCertification(i)">
+                  <i class="bi bi-trash"></i> Supprimer
+                </button>
+              </div>
+            </div>
+            <button type="button" class="btn btn-outline-primary mt-2" (click)="addCertification()">
+              <i class="bi bi-plus-circle"></i> Ajouter une certification
+            </button>
+          </div>
+        </div>
 
-    <!-- Langues -->
-    <div class="mb-3">
-      <label for="languages" class="form-label">Langues</label>
-      <textarea class="form-control" id="languages" rows="5" formControlName="languages"></textarea>
+        <!-- Boutons -->
+        <div class="d-flex justify-content-end gap-2">
+          <button type="button" class="btn btn-secondary" routerLink="/employees">
+            <i class="bi bi-x-circle me-1"></i>
+            Annuler
+          </button>
+          <button type="submit" class="btn btn-primary" [disabled]="employeeForm.invalid || loading">
+            <i class="bi" [class]="isEditMode ? 'bi-save' : 'bi-plus-circle'"></i>
+            {{isEditMode ? 'Enregistrer' : 'Ajouter'}}
+          </button>
+        </div>
+      </form>
     </div>
-
-    <!-- Certifications -->
-    <div class="mb-3">
-      <label for="certifications" class="form-label">Certifications</label>
-      <textarea class="form-control" id="certifications" rows="5" formControlName="certifications"></textarea>
-    </div>
-
-    <!-- Boutons d'action -->
-    <div class="d-flex justify-content-end gap-2">
-      <button type="button" class="btn btn-secondary" routerLink="/employees">
-        <i class="bi bi-x-lg"></i> Annuler
-      </button>
-      <button type="button" class="btn btn-success" [disabled]="!employeeForm.valid" (click)="confirmSubmit()">
-        <i class="bi bi-check-lg"></i> {{ isEditMode ? 'Mettre à jour' : 'Créer' }}
-      </button>
-    </div>
-  </form>
+  </div>
 </div>
 
 <!-- Modal de confirmation -->
@@ -127,7 +367,7 @@
         <button type="button" class="btn btn-secondary" (click)="cancelSubmit()">
           <i class="bi bi-x-lg"></i> Annuler
         </button>
-        <button type="button" class="btn btn-success" (click)="onSubmit()">
+        <button type="button" class="btn btn-success" (click)="confirmSubmit()">
           <i class="bi bi-check-lg"></i> Confirmer
         </button>
       </div>

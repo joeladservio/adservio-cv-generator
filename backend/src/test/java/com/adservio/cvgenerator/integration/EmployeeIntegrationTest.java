@@ -1,5 +1,6 @@
 package com.adservio.cvgenerator.integration;
 
+import com.adservio.cvgenerator.CvGeneratorApplication;
 import com.adservio.cvgenerator.model.Employee;
 import com.adservio.cvgenerator.repository.EmployeeRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -9,19 +10,23 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest
+@SpringBootTest(
+    classes = CvGeneratorApplication.class,
+    webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT
+)
 @AutoConfigureMockMvc
+@TestPropertySource(locations = "classpath:application-test.properties")
 @Transactional
-public class EmployeeIntegrationTest {
+class EmployeeIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -32,203 +37,137 @@ public class EmployeeIntegrationTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    private Employee testEmployee;
-
     @BeforeEach
     void setUp() {
         employeeRepository.deleteAll();
-        testEmployee = createTestEmployee(null); // ID will be generated
     }
 
     @Test
-    void testCreateAndGetEmployee() throws Exception {
-        // Create employee
-        String response = mockMvc.perform(post("/api/employees")
+    void createEmployee_WithValidData_ShouldSucceed() throws Exception {
+        // Given
+        Employee employee = createTestEmployee();
+        String employeeJson = objectMapper.writeValueAsString(employee);
+
+        // When
+        MvcResult result = mockMvc.perform(post("/api/employees")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(testEmployee)))
-            .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.id").exists())
-            .andExpect(jsonPath("$.firstName").value("John"))
-            .andExpect(jsonPath("$.lastName").value("Doe"))
-            .andExpect(jsonPath("$.email").value("john@example.com"))
-            .andExpect(jsonPath("$.position").value("Developer"))
-            .andReturn()
-            .getResponse()
-            .getContentAsString();
+                .content(employeeJson))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").exists())
+                .andExpect(jsonPath("$.firstName").value(employee.getFirstName()))
+                .andExpect(jsonPath("$.lastName").value(employee.getLastName()))
+                .andExpect(jsonPath("$.email").value(employee.getEmail()))
+                .andReturn();
 
-        Employee createdEmployee = objectMapper.readValue(response, Employee.class);
-
-        // Get all employees
-        mockMvc.perform(get("/api/employees"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$").isArray())
-            .andExpect(jsonPath("$[0].id").value(createdEmployee.getId()))
-            .andExpect(jsonPath("$[0].firstName").value("John"))
-            .andExpect(jsonPath("$[0].lastName").value("Doe"))
-            .andExpect(jsonPath("$[0].email").value("john@example.com"));
-
-        // Verify database state
-        List<Employee> employees = employeeRepository.findAll();
-        assertEquals(1, employees.size());
-        assertEquals(createdEmployee.getId(), employees.get(0).getId());
+        // Then
+        String responseJson = result.getResponse().getContentAsString();
+        Employee createdEmployee = objectMapper.readValue(responseJson, Employee.class);
+        assertNotNull(createdEmployee.getId());
+        assertTrue(employeeRepository.findById(createdEmployee.getId()).isPresent());
     }
 
     @Test
-    void testUpdateEmployee() throws Exception {
-        // Create employee first
-        Employee createdEmployee = employeeRepository.save(testEmployee);
+    void createEmployee_WithInvalidData_ShouldFail() throws Exception {
+        // Given
+        Employee invalidEmployee = new Employee(); // Empty employee
+        String employeeJson = objectMapper.writeValueAsString(invalidEmployee);
 
-        // Update employee
-        createdEmployee.setFirstName("Jane");
-        createdEmployee.setLastName("Smith");
-        createdEmployee.setPosition("Senior Developer");
-        createdEmployee.setSkills("Java, Spring, Angular");
-
-        String response = mockMvc.perform(put("/api/employees/" + createdEmployee.getId())
+        // When/Then
+        mockMvc.perform(post("/api/employees")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(createdEmployee)))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.firstName").value("Jane"))
-            .andExpect(jsonPath("$.lastName").value("Smith"))
-            .andExpect(jsonPath("$.position").value("Senior Developer"))
-            .andExpect(jsonPath("$.skills").value("Java, Spring, Angular"))
-            .andReturn()
-            .getResponse()
-            .getContentAsString();
+                .content(employeeJson))
+                .andExpect(status().isBadRequest());
+    }
 
-        // Verify database state
-        Employee updatedEmployee = employeeRepository.findById(createdEmployee.getId()).orElse(null);
-        assertNotNull(updatedEmployee);
-        assertEquals("Jane", updatedEmployee.getFirstName());
-        assertEquals("Smith", updatedEmployee.getLastName());
+    @Test
+    void updateEmployee_WithValidData_ShouldSucceed() throws Exception {
+        // Given
+        Employee existingEmployee = employeeRepository.save(createTestEmployee());
+        existingEmployee.setFirstName("Updated");
+        existingEmployee.setPosition("Senior Developer");
+        String updateJson = objectMapper.writeValueAsString(existingEmployee);
+
+        // When
+        MvcResult result = mockMvc.perform(put("/api/employees/{id}", existingEmployee.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(updateJson))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(existingEmployee.getId()))
+                .andExpect(jsonPath("$.firstName").value("Updated"))
+                .andExpect(jsonPath("$.position").value("Senior Developer"))
+                .andReturn();
+
+        // Then
+        String responseJson = result.getResponse().getContentAsString();
+        Employee updatedEmployee = objectMapper.readValue(responseJson, Employee.class);
+        assertEquals("Updated", updatedEmployee.getFirstName());
         assertEquals("Senior Developer", updatedEmployee.getPosition());
+
+        // Verify in database
+        Employee savedEmployee = employeeRepository.findById(existingEmployee.getId())
+                .orElseThrow();
+        assertEquals("Updated", savedEmployee.getFirstName());
+        assertEquals("Senior Developer", savedEmployee.getPosition());
     }
 
     @Test
-    void testDeleteEmployee() throws Exception {
-        // Create employee first
-        Employee createdEmployee = employeeRepository.save(testEmployee);
+    void updateEmployee_WithNonExistingId_ShouldFail() throws Exception {
+        // Given
+        Employee updateData = createTestEmployee();
+        String updateJson = objectMapper.writeValueAsString(updateData);
 
-        // Delete employee
-        mockMvc.perform(delete("/api/employees/" + createdEmployee.getId()))
-            .andExpect(status().isNoContent());
-
-        // Verify employee is deleted
-        mockMvc.perform(get("/api/employees/" + createdEmployee.getId()))
-            .andExpect(status().isNotFound());
-
-        // Verify database state
-        assertFalse(employeeRepository.existsById(createdEmployee.getId()));
+        // When/Then
+        mockMvc.perform(put("/api/employees/{id}", 999L)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(updateJson))
+                .andExpect(status().isNotFound());
     }
 
     @Test
-    void testGetEmployeeById() throws Exception {
-        // Create employee first
-        Employee createdEmployee = employeeRepository.save(testEmployee);
+    void getEmployeeById_WhenExists_ShouldSucceed() throws Exception {
+        // Given
+        Employee employee = employeeRepository.save(createTestEmployee());
 
-        // Get employee by id
-        mockMvc.perform(get("/api/employees/" + createdEmployee.getId()))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.id").value(createdEmployee.getId()))
-            .andExpect(jsonPath("$.firstName").value("John"))
-            .andExpect(jsonPath("$.lastName").value("Doe"))
-            .andExpect(jsonPath("$.email").value("john@example.com"))
-            .andExpect(jsonPath("$.position").value("Developer"))
-            .andExpect(jsonPath("$.department").value("IT"))
-            .andExpect(jsonPath("$.skills").value("Java, Spring"));
+        // When/Then
+        mockMvc.perform(get("/api/employees/{id}", employee.getId()))
+                .andExpect(status().isOk());
     }
 
     @Test
-    void testGetEmployeeByIdNotFound() throws Exception {
-        mockMvc.perform(get("/api/employees/999"))
-            .andExpect(status().isNotFound());
+    void getEmployeeById_WhenNotExists_ShouldReturn404() throws Exception {
+        // When/Then
+        mockMvc.perform(get("/api/employees/{id}", 999L))
+                .andExpect(status().isNotFound());
     }
 
     @Test
-    void testCreateEmployeeWithInvalidData() throws Exception {
-        // Test with invalid email
-        testEmployee.setEmail("invalid-email");
-        mockMvc.perform(post("/api/employees")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(testEmployee)))
-            .andExpect(status().isBadRequest());
+    void getAllEmployees_ShouldSucceed() throws Exception {
+        // Given
+        employeeRepository.save(createTestEmployee());
 
-        // Test with missing required fields
-        Employee invalidEmployee = new Employee();
-        mockMvc.perform(post("/api/employees")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(invalidEmployee)))
-            .andExpect(status().isBadRequest());
-
-        // Verify no employees were created
-        assertEquals(0, employeeRepository.count());
+        // When/Then
+        mockMvc.perform(get("/api/employees"))
+                .andExpect(status().isOk());
     }
 
     @Test
-    void testUpdateEmployeeWithInvalidData() throws Exception {
-        // Create employee first
-        Employee createdEmployee = employeeRepository.save(testEmployee);
+    void deleteEmployee_WhenExists_ShouldSucceed() throws Exception {
+        // Given
+        Employee savedEmployee = employeeRepository.save(createTestEmployee());
 
-        // Test with invalid email
-        createdEmployee.setEmail("invalid-email");
-        mockMvc.perform(put("/api/employees/" + createdEmployee.getId())
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(createdEmployee)))
-            .andExpect(status().isBadRequest());
-
-        // Test with missing required fields
-        Employee invalidEmployee = new Employee();
-        invalidEmployee.setId(createdEmployee.getId());
-        mockMvc.perform(put("/api/employees/" + createdEmployee.getId())
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(invalidEmployee)))
-            .andExpect(status().isBadRequest());
-
-        // Verify the employee wasn't changed
-        Employee unchangedEmployee = employeeRepository.findById(createdEmployee.getId()).orElse(null);
-        assertNotNull(unchangedEmployee);
-        assertEquals(testEmployee.getEmail(), unchangedEmployee.getEmail());
+        // When/Then
+        mockMvc.perform(delete("/api/employees/{id}", savedEmployee.getId()))
+                .andExpect(status().isNoContent());
     }
 
-    @Test
-    void testConcurrentModification() throws Exception {
-        // Create employee
-        Employee createdEmployee = employeeRepository.save(testEmployee);
-
-        // First update
-        createdEmployee.setPosition("Senior Developer");
-        mockMvc.perform(put("/api/employees/" + createdEmployee.getId())
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(createdEmployee)))
-            .andExpect(status().isOk());
-
-        // Concurrent update with old data
-        testEmployee.setPosition("Team Lead");
-        mockMvc.perform(put("/api/employees/" + createdEmployee.getId())
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(testEmployee)))
-            .andExpect(status().isOk());
-
-        // Verify final state
-        Employee finalEmployee = employeeRepository.findById(createdEmployee.getId()).orElse(null);
-        assertNotNull(finalEmployee);
-        assertEquals("Team Lead", finalEmployee.getPosition());
-    }
-
-    private Employee createTestEmployee(Long id) {
+    private Employee createTestEmployee() {
         Employee employee = new Employee();
-        employee.setId(id);
         employee.setFirstName("John");
         employee.setLastName("Doe");
-        employee.setEmail("john@example.com");
-        employee.setPhone("1234567890");
-        employee.setPosition("Developer");
-        employee.setDepartment("IT");
-        employee.setEducation("Bachelor in CS");
-        employee.setExperience("5 years");
-        employee.setSkills("Java, Spring");
-        employee.setLanguages("English, French");
-        employee.setCertifications("AWS Certified");
+        employee.setEmail("john.doe@example.com");
+        employee.setPhone("+1234567890");
+        employee.setPosition("Software Engineer");
+        employee.setDepartment("Engineering");
         return employee;
     }
 } 

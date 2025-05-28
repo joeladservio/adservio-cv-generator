@@ -9,12 +9,14 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/employees")
-@CrossOrigin(origins = "http://localhost:4200")
+@CrossOrigin(origins = "http://localhost:4200", allowCredentials = "true")
 public class EmployeeController {
     private static final Logger logger = LoggerFactory.getLogger(EmployeeController.class);
     private final EmployeeService employeeService;
@@ -72,16 +74,29 @@ public class EmployeeController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteEmployee(@PathVariable Long id) {
         try {
-            logger.info("Tentative de suppression de l'employé {}", id);
+            logger.info("Tentative de suppression de l'employé avec l'ID: {}", id);
             employeeService.deleteEmployee(id);
-            logger.info("Employé {} supprimé avec succès", id);
+            logger.info("Employé supprimé avec succès");
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         } catch (ResponseStatusException e) {
             logger.error("Erreur lors de la suppression: {}", e.getMessage());
             throw e;
         } catch (Exception e) {
             logger.error("Erreur inattendue lors de la suppression: ", e);
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "ID employé invalide");
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Erreur lors de la suppression: " + e.getMessage());
         }
+    }
+
+    @GetMapping("/{id}/cv")
+    public ResponseEntity<byte[]> generateCV(@PathVariable Long id) {
+        byte[] pdfContent = employeeService.generateCV(id);
+        
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("filename", "cv.pdf");
+        
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(pdfContent);
     }
 } 

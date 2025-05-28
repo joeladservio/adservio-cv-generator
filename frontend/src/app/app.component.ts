@@ -23,6 +23,11 @@ import { Component } from '@angular/core';
                 <i class="bi bi-people"></i> Employés
               </a>
             </li>
+            <li class="nav-item">
+              <a class="nav-link" routerLink="/statistics" routerLinkActive="active">
+                <i class="bi bi-bar-chart"></i> Statistiques
+              </a>
+            </li>
           </ul>
         </div>
       </div>

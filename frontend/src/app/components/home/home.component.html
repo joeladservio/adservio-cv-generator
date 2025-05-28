@@ -1,43 +1,122 @@
-<div class="home-container">
-  <div class="jumbotron text-center mb-5">
+<div class="container py-5">
+  <!-- Section d'en-tête -->
+  <div class="welcome-section text-center mb-5">
     <h1 class="display-4">
-      <i class="bi bi-people-fill text-primary me-3"></i>
-      Bienvenue sur CV Generator
+      <i class="bi bi-file-earmark-person-fill text-primary me-3"></i>
+      Bienvenue sur AdServio CV Generator
     </h1>
     <p class="lead">
-      Gérez efficacement les CV de vos employés avec notre solution intuitive
+      Gérez efficacement les CV de vos employés avec notre solution intuitive et professionnelle
     </p>
   </div>
 
-  <div class="row">
-    <div class="col-md-6 mb-4">
-      <div class="card h-100">
-        <div class="card-body text-center">
-          <i class="bi bi-list-ul display-4 text-primary mb-3"></i>
-          <h3 class="card-title">Liste des Employés</h3>
-          <p class="card-text">
-            Consultez, ajoutez, modifiez et gérez les informations de vos employés
-          </p>
-          <button class="btn btn-primary" (click)="navigateToEmployees()">
-            <i class="bi bi-arrow-right-circle me-2"></i>
-            Accéder à la liste
-          </button>
+  <!-- Cartes de fonctionnalités principales -->
+  <div class="row g-4 mb-5">
+    <div class="col-md-4">
+      <div class="feature-card" (click)="navigateToEmployees()" role="button" tabindex="0">
+        <div class="icon-wrapper">
+          <i class="bi bi-people-fill"></i>
         </div>
+        <h3>Gestion des Employés</h3>
+        <p>Gérez facilement les informations de vos employés</p>
+        <ul class="feature-list">
+          <li>Liste complète des employés</li>
+          <li>Ajout et modification rapides</li>
+          <li>Interface intuitive</li>
+        </ul>
+        <button class="btn btn-primary btn-lg w-100">
+          <i class="bi bi-list-ul"></i>
+          Voir la liste
+        </button>
       </div>
     </div>
 
-    <div class="col-md-6 mb-4">
-      <div class="card h-100">
-        <div class="card-body text-center">
-          <i class="bi bi-bar-chart-line display-4 text-primary mb-3"></i>
-          <h3 class="card-title">Statistiques</h3>
-          <p class="card-text">
-            Visualisez les statistiques et analyses des données de vos employés
-          </p>
-          <button class="btn btn-primary" (click)="navigateToStatistics()">
-            <i class="bi bi-arrow-right-circle me-2"></i>
-            Voir les statistiques
-          </button>
+    <div class="col-md-4">
+      <div class="feature-card clickable" (click)="navigateToNewEmployee()" role="button" tabindex="0">
+        <div class="icon-wrapper">
+          <i class="bi bi-file-earmark-text"></i>
+        </div>
+        <h3>Création de CV</h3>
+        <p>Créez des CV professionnels en quelques clics</p>
+        <ul class="feature-list">
+          <li>Format PDF professionnel</li>
+          <li>Sections personnalisables</li>
+          <li>Export instantané</li>
+        </ul>
+        <button class="btn btn-success btn-lg w-100">
+          <i class="bi bi-plus-circle"></i>
+          Nouveau CV
+        </button>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="feature-card" (click)="navigateToStatistics()" role="button" tabindex="0">
+        <div class="icon-wrapper">
+          <i class="bi bi-bar-chart-line"></i>
+        </div>
+        <h3>Statistiques</h3>
+        <p>Analysez les données de vos employés</p>
+        <ul class="feature-list">
+          <li>Vue d'ensemble des âges</li>
+          <li>Répartition par département</li>
+          <li>Indicateurs clés</li>
+        </ul>
+        <button class="btn btn-primary btn-lg w-100">
+          <i class="bi bi-graph-up"></i>
+          Voir les statistiques
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Schéma d'utilisation -->
+  <div class="usage-flow mb-5">
+    <h2 class="text-center mb-4">Comment utiliser CV Generator ?</h2>
+    <div class="flow-container">
+      <div class="flow-step">
+        <div class="step-icon">
+          <i class="bi bi-person-plus-fill"></i>
+        </div>
+        <div class="step-text">
+          <h5>Étape 1</h5>
+          <p>Ajout d'un employé</p>
+        </div>
+      </div>
+      <div class="flow-arrow">
+        <i class="bi bi-arrow-right"></i>
+      </div>
+      <div class="flow-step">
+        <div class="step-icon">
+          <i class="bi bi-file-earmark-text"></i>
+        </div>
+        <div class="step-text">
+          <h5>Étape 2</h5>
+          <p>Saisie des informations</p>
+        </div>
+      </div>
+      <div class="flow-arrow">
+        <i class="bi bi-arrow-right"></i>
+      </div>
+      <div class="flow-step">
+        <div class="step-icon">
+          <i class="bi bi-file-pdf"></i>
+        </div>
+        <div class="step-text">
+          <h5>Étape 3</h5>
+          <p>Génération du CV</p>
+        </div>
+      </div>
+      <div class="flow-arrow">
+        <i class="bi bi-arrow-right"></i>
+      </div>
+      <div class="flow-step">
+        <div class="step-icon">
+          <i class="bi bi-download"></i>
+        </div>
+        <div class="step-text">
+          <h5>Étape 4</h5>
+          <p>Téléchargement</p>
         </div>
       </div>
     </div>

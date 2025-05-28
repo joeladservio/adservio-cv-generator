@@ -10,25 +10,71 @@ h2 {
   text-align: center;
 }
 
+.section-card {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+  .section-title {
+    font-size: 1.25rem;
+    color: #2c3e50;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #e9ecef;
+
+    i {
+      color: #6c757d;
+    }
+  }
+}
+
 .form-label {
   font-weight: 500;
   color: #495057;
 }
 
 .form-control {
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  padding: 8px 12px;
+  border-color: #dee2e6;
   
   &:focus {
     border-color: #80bdff;
     box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+  }
+
+  &::placeholder {
+    color: #adb5bd;
+    font-size: 0.875rem;
   }
 }
 
 textarea.form-control {
   resize: vertical;
   min-height: 100px;
+}
+
+.text-danger {
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}
+
+.btn {
+  i {
+    margin-right: 0.5rem;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+  }
+}
+
+// Animation de chargement
+.btn-primary {
+  position: relative;
+
+  &:disabled {
+    opacity: 0.7;
+  }
 }
 
 .btn-primary {
@@ -59,10 +105,6 @@ textarea.form-control {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-
-  i {
-    font-size: 1rem;
-  }
 }
 
 .form-control[type="file"] {
@@ -111,5 +153,12 @@ textarea.form-control {
       font-size: 5rem;
       color: #adb5bd;
     }
+  }
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .section-card {
+    padding: 1rem;
   }
 } 

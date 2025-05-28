@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Employee } from '../models/employee.model';
+import { Employee, Education, Experience, Skill, Language, Certification } from '../models/employee.model';
 
 declare const pdfMake: any;
 declare global {
@@ -30,13 +30,6 @@ export class PdfService {
                 width: '30%',
                 stack: [
                   {
-                    image: employee.photo || 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJjdXJyZW50Q29sb3IiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBjbGFzcz0iZmVhdGhlciBmZWF0aGVyLXVzZXIiPjxwYXRoIGQ9Ik0yMCAyMXYtMmE0IDQgMCAwIDAtNC00SDhhNCA0IDAgMCAwLTQgNHYyIj48L3BhdGg+PGNpcmNsZSBjeD0iMTIiIGN5PSI3IiByPSI0Ij48L2NpcmNsZT48L3N2Zz4=',
-                    width: 150,
-                    height: 150,
-                    alignment: 'center',
-                    margin: [0, 0, 0, 20]
-                  },
-                  {
                     text: `${employee.firstName} ${employee.lastName}`,
                     style: 'header',
                     alignment: 'center'
@@ -62,53 +55,109 @@ export class PdfService {
                   {
                     text: `Téléphone: ${employee.phone}`,
                     margin: [0, 5, 0, 0]
-                  }
-                ]
+                  },
+                  employee.address ? {
+                    text: `Adresse: ${employee.address}`,
+                    margin: [0, 5, 0, 0]
+                  } : null
+                ].filter(item => item !== null)
               },
               {
                 width: '70%',
                 stack: [
-                  {
-                    text: 'Formation',
-                    style: 'sectionHeader'
-                  },
-                  {
-                    text: employee.education,
-                    margin: [0, 5, 0, 15]
-                  },
-                  {
-                    text: 'Expérience',
-                    style: 'sectionHeader'
-                  },
-                  {
-                    text: employee.experience,
-                    margin: [0, 5, 0, 15]
-                  },
-                  {
-                    text: 'Compétences',
-                    style: 'sectionHeader'
-                  },
-                  {
-                    text: employee.skills,
-                    margin: [0, 5, 0, 15]
-                  },
-                  {
-                    text: 'Langues',
-                    style: 'sectionHeader'
-                  },
-                  {
-                    text: employee.languages,
-                    margin: [0, 5, 0, 15]
-                  },
-                  {
-                    text: 'Certifications',
-                    style: 'sectionHeader'
-                  },
-                  {
-                    text: employee.certifications,
-                    margin: [0, 5, 0, 15]
-                  }
-                ]
+                  // Formation
+                  employee.educationList && employee.educationList.length > 0 ? [
+                    {
+                      text: 'Formation',
+                      style: 'sectionHeader'
+                    },
+                    ...employee.educationList.map(edu => ({
+                      text: [
+                        `${edu.degree}\n`,
+                        `${edu.school} (${edu.startYear} - ${edu.endYear})\n`,
+                        edu.description ? `${edu.description}\n` : ''
+                      ],
+                      margin: [0, 5, 0, 15]
+                    }))
+                  ] : [],
+
+                  // Expérience
+                  employee.experienceList && employee.experienceList.length > 0 ? [
+                    {
+                      text: 'Expérience Professionnelle',
+                      style: 'sectionHeader'
+                    },
+                    ...employee.experienceList.map(exp => ({
+                      text: [
+                        `${exp.title} - ${exp.company}\n`,
+                        `${exp.startDate} - ${exp.endDate}\n`,
+                        `${exp.description}\n`,
+                        exp.technologies ? `Technologies: ${exp.technologies}\n` : ''
+                      ],
+                      margin: [0, 5, 0, 15]
+                    }))
+                  ] : [],
+
+                  // Compétences
+                  employee.skillsList && employee.skillsList.length > 0 ? [
+                    {
+                      text: 'Compétences',
+                      style: 'sectionHeader'
+                    },
+                    {
+                      table: {
+                        widths: ['*', 'auto'],
+                        body: [
+                          ...employee.skillsList.map(skill => [
+                            skill.name,
+                            skill.level
+                          ])
+                        ]
+                      },
+                      layout: 'lightHorizontalLines',
+                      margin: [0, 5, 0, 15]
+                    }
+                  ] : [],
+
+                  // Langues
+                  employee.languagesList && employee.languagesList.length > 0 ? [
+                    {
+                      text: 'Langues',
+                      style: 'sectionHeader'
+                    },
+                    {
+                      table: {
+                        widths: ['*', 'auto'],
+                        body: [
+                          ...employee.languagesList.map(lang => [
+                            lang.name,
+                            lang.level
+                          ])
+                        ]
+                      },
+                      layout: 'lightHorizontalLines',
+                      margin: [0, 5, 0, 15]
+                    }
+                  ] : [],
+
+                  // Certifications
+                  employee.certificationsList && employee.certificationsList.length > 0 ? [
+                    {
+                      text: 'Certifications',
+                      style: 'sectionHeader'
+                    },
+                    ...employee.certificationsList.map(cert => ({
+                      text: [
+                        `${cert.name}\n`,
+                        `${cert.organization}\n`,
+                        `Obtenu le: ${cert.dateObtained}`,
+                        cert.expiryDate ? ` - Expire le: ${cert.expiryDate}` : '',
+                        '\n'
+                      ],
+                      margin: [0, 5, 0, 15]
+                    }))
+                  ] : []
+                ].flat()
               }
             ]
           }

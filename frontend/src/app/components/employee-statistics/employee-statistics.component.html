@@ -1,16 +1,92 @@
-<div class="container mt-4">
-  <div class="row">
-    <div class="col-12">
-      <div class="card">
-        <div class="card-header bg-primary text-white">
-          <h2 class="mb-0">
-            <i class="bi bi-bar-chart-line me-2"></i>
-            Statistiques des Employés
-          </h2>
+<div class="container py-4">
+  <!-- Cartes de statistiques générales -->
+  <div class="row g-4 mb-5">
+    <div class="col-md-4">
+      <div class="stat-card">
+        <div class="card-body text-center">
+          <i class="bi bi-people-fill display-4 text-primary mb-3"></i>
+          <h4>Total des Employés</h4>
+          <p class="display-4">{{totalEmployees}}</p>
         </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="stat-card">
+        <div class="card-body text-center">
+          <i class="bi bi-building display-4 text-success mb-3"></i>
+          <h4>Départements</h4>
+          <p class="display-4">{{uniqueDepartments}}</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="stat-card">
+        <div class="card-body text-center">
+          <i class="bi bi-briefcase-fill display-4 text-info mb-3"></i>
+          <h4>Postes Uniques</h4>
+          <p class="display-4">{{uniquePositions}}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Graphiques -->
+  <div class="row g-4">
+    <!-- Graphique des départements -->
+    <div class="col-md-6">
+      <div class="card">
         <div class="card-body">
+          <h4 class="card-title mb-4">
+            <i class="bi bi-pie-chart-fill text-primary me-2"></i>
+            Répartition par Département
+          </h4>
           <div class="chart-container">
-            <canvas #experienceChart></canvas>
+            <canvas id="departmentChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Graphique des âges -->
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-body">
+          <h4 class="card-title mb-4">
+            <i class="bi bi-bar-chart-fill text-success me-2"></i>
+            Distribution des Âges
+          </h4>
+          <div class="chart-container">
+            <canvas id="ageChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tableau détaillé des départements -->
+    <div class="col-12 mt-4">
+      <div class="card">
+        <div class="card-body">
+          <h4 class="card-title mb-4">
+            <i class="bi bi-table text-info me-2"></i>
+            Détails par Département
+          </h4>
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>Département</th>
+                  <th>Nombre d'Employés</th>
+                  <th>Pourcentage</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let stat of departmentStats">
+                  <td>{{stat.name}}</td>
+                  <td>{{stat.count}}</td>
+                  <td>{{stat.percentage | number:'1.0-1'}}%</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>

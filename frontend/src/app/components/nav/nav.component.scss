@@ -1,0 +1,27 @@
+.spacer {
+  flex: 1 1 auto;
+}
+
+mat-sidenav-container {
+  height: calc(100vh - 64px);
+}
+
+mat-sidenav {
+  width: 250px;
+}
+
+.mat-list-item {
+  .mat-icon {
+    margin-right: 16px;
+  }
+}
+
+.active {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+@media (max-width: 599px) {
+  mat-sidenav-container {
+    height: calc(100vh - 56px);
+  }
+} 

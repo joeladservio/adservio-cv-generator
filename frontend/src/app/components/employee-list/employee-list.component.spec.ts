@@ -1,60 +1,70 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { RouterTestingModule } from '@angular/router/testing';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { FormsModule } from '@angular/forms';
+import { of, throwError } from 'rxjs';
+
 import { EmployeeListComponent } from './employee-list.component';
 import { EmployeeService } from '../../services/employee.service';
-import { Router } from '@angular/router';
-import { of } from 'rxjs';
 import { Employee } from '../../models/employee.model';
-import { RouterTestingModule } from '@angular/router/testing';
 
 describe('EmployeeListComponent', () => {
   let component: EmployeeListComponent;
   let fixture: ComponentFixture<EmployeeListComponent>;
   let employeeService: jasmine.SpyObj<EmployeeService>;
-  let router: jasmine.SpyObj<Router>;
 
   const mockEmployees: Employee[] = [
     {
       id: 1,
       firstName: 'John',
       lastName: 'Doe',
-      email: 'john@example.com',
-      phone: '1234567890',
+      email: 'john.doe@example.com',
+      phone: '123456789',
       position: 'Developer',
       department: 'IT',
-      education: 'Bachelor in CS',
-      experience: '5 years',
-      skills: 'Angular, TypeScript',
+      education: 'Master in Computer Science',
+      experience: '5 years of experience',
+      skills: 'JavaScript, Angular, Java',
       languages: 'English, French',
-      certifications: 'AWS Certified'
+      certifications: 'AWS Certified Developer'
+    },
+    {
+      id: 2,
+      firstName: 'Jane',
+      lastName: 'Smith',
+      email: 'jane.smith@example.com',
+      phone: '987654321',
+      position: 'Designer',
+      department: 'Design',
+      education: 'Bachelor in Design',
+      experience: '3 years of experience',
+      skills: 'UI/UX, Figma, Adobe XD',
+      languages: 'English, Spanish',
+      certifications: 'Google UX Design'
     }
   ];
 
   beforeEach(async () => {
-    const employeeServiceSpy = jasmine.createSpyObj('EmployeeService', [
-      'getAllEmployees',
-      'getEmployeeById',
-      'deleteEmployee'
-    ]);
-    const routerSpy = jasmine.createSpyObj('Router', ['navigate']);
-
+    const spy = jasmine.createSpyObj('EmployeeService', ['getEmployees', 'getEmployee', 'deleteEmployee', 'generateCV']);
+    
     await TestBed.configureTestingModule({
-      declarations: [EmployeeListComponent],
-      imports: [RouterTestingModule],
+      declarations: [ EmployeeListComponent ],
+      imports: [
+        RouterTestingModule,
+        HttpClientTestingModule,
+        FormsModule
+      ],
       providers: [
-        { provide: EmployeeService, useValue: employeeServiceSpy },
-        { provide: Router, useValue: routerSpy }
+        { provide: EmployeeService, useValue: spy }
       ]
     }).compileComponents();
 
     employeeService = TestBed.inject(EmployeeService) as jasmine.SpyObj<EmployeeService>;
-    router = TestBed.inject(Router) as jasmine.SpyObj<Router>;
   });
 
   beforeEach(() => {
     fixture = TestBed.createComponent(EmployeeListComponent);
     component = fixture.componentInstance;
-    employeeService.getAllEmployees.and.returnValue(of(mockEmployees));
-    fixture.detectChanges();
   });
 
   it('should create', () => {
@@ -62,85 +72,109 @@ describe('EmployeeListComponent', () => {
   });
 
   it('should load employees on init', () => {
-    expect(employeeService.getAllEmployees).toHaveBeenCalled();
+    employeeService.getEmployees.and.returnValue(of(mockEmployees));
+    
+    fixture.detectChanges();
+
     expect(component.employees).toEqual(mockEmployees);
+    expect(component.totalItems).toBe(2);
+    expect(component.error).toBeNull();
   });
 
-  it('should view employee details', () => {
-    const employeeId = 1;
-    employeeService.getEmployeeById.and.returnValue(of(mockEmployees[0]));
+  it('should handle error when loading employees', () => {
+    const errorMessage = 'Error loading employees';
+    employeeService.getEmployees.and.returnValue(throwError(() => new Error(errorMessage)));
     
-    component.viewEmployee(employeeId);
-    
-    expect(employeeService.getEmployeeById).toHaveBeenCalledWith(employeeId);
-    expect(component.selectedEmployee).toEqual(mockEmployees[0]);
+    fixture.detectChanges();
+
+    expect(component.error).toBe('Erreur lors du chargement des employés');
+  });
+
+  it('should update pagination when page size changes', () => {
+    employeeService.getEmployees.and.returnValue(of(mockEmployees));
+    fixture.detectChanges();
+
+    component.pageSize = 1;
+    component.onPageSizeChange();
+
+    expect(component.currentPage).toBe(1);
+    expect(component.totalPages).toBe(2);
+    expect(component.displayedEmployees.length).toBe(1);
+  });
+
+  it('should change page correctly', () => {
+    employeeService.getEmployees.and.returnValue(of(mockEmployees));
+    fixture.detectChanges();
+
+    component.pageSize = 1;
+    component.onPageSizeChange();
+    component.onPageChange(2);
+
+    expect(component.currentPage).toBe(2);
+    expect(component.displayedEmployees[0]).toEqual(mockEmployees[1]);
+  });
+
+  it('should show employee details', () => {
+    const employee = mockEmployees[0];
+    employeeService.getEmployee.and.returnValue(of(employee));
+
+    component.viewEmployee(1);
+
+    expect(component.selectedEmployee).toEqual(employee);
     expect(component.showDetailsModal).toBeTrue();
   });
 
-  it('should navigate to edit employee', () => {
-    const employeeId = 1;
-    
-    component.editEmployee(employeeId);
-    
-    expect(router.navigate).toHaveBeenCalledWith(['/employee-form', employeeId]);
-  });
+  it('should handle error when loading employee details', () => {
+    const errorMessage = 'Error loading employee details';
+    employeeService.getEmployee.and.returnValue(throwError(() => new Error(errorMessage)));
 
-  it('should confirm delete employee', () => {
-    const employee = mockEmployees[0];
-    
-    component.confirmDelete(employee);
-    
-    expect(component.employeeToDelete).toEqual(employee);
-    expect(component.showDeleteModal).toBeTrue();
+    component.viewEmployee(1);
+
+    expect(component.error).toBe('Erreur lors du chargement des détails de l\'employé');
+    expect(component.showDetailsModal).toBeFalse();
   });
 
   it('should delete employee', () => {
-    const employee = mockEmployees[0];
     employeeService.deleteEmployee.and.returnValue(of(void 0));
-    component.employeeToDelete = employee;
+    employeeService.getEmployees.and.returnValue(of(mockEmployees));
     
-    component.deleteEmployee();
-    
-    expect(employeeService.deleteEmployee).toHaveBeenCalledWith(employee.id);
-    expect(component.showDeleteModal).toBeFalse();
-    expect(employeeService.getAllEmployees).toHaveBeenCalled();
+    component.employeeToDelete = mockEmployees[0];
+    component.confirmDelete();
+
+    expect(employeeService.deleteEmployee).toHaveBeenCalledWith(1);
+    expect(component.employeeToDelete).toBeNull();
   });
 
-  it('should handle pagination', () => {
-    const mockEmployees = Array(15).fill(null).map((_, index) => ({
-      id: index + 1,
-      firstName: `Employee ${index + 1}`,
-      lastName: 'Test',
-      email: `employee${index + 1}@test.com`,
-      phone: '1234567890',
-      position: 'Developer',
-      department: 'IT'
-    }));
+  it('should handle error when deleting employee', () => {
+    const errorMessage = 'Error deleting employee';
+    employeeService.deleteEmployee.and.returnValue(throwError(() => new Error(errorMessage)));
+    
+    component.employeeToDelete = mockEmployees[0];
+    component.confirmDelete();
 
-    employeeService.getAllEmployees.and.returnValue(of(mockEmployees));
-    component.ngOnInit();
-
-    expect(component.totalItems).toBe(15);
-    expect(component.totalPages).toBe(2);
-    expect(component.employees.length).toBe(10); // itemsPerPage default value
+    expect(component.error).toBe('Erreur lors de la suppression de l\'employé');
   });
 
-  it('should change page', () => {
-    const mockEmployees = Array(15).fill(null).map((_, index) => ({
-      id: index + 1,
-      firstName: `Employee ${index + 1}`,
-      lastName: 'Test',
-      email: `employee${index + 1}@test.com`,
-      phone: '1234567890',
-      position: 'Developer',
-      department: 'IT'
-    }));
+  it('should generate CV', () => {
+    const mockBlob = new Blob(['PDF content'], { type: 'application/pdf' });
+    employeeService.generateCV.and.returnValue(of(mockBlob));
+    
+    spyOn(window, 'open');
+    spyOn(window.URL, 'createObjectURL').and.returnValue('blob:url');
 
-    employeeService.getAllEmployees.and.returnValue(of(mockEmployees));
-    component.ngOnInit();
+    component.generateCV(mockEmployees[0]);
 
-    component.onPageChange(2);
-    expect(component.currentPage).toBe(2);
-    expect(component.employees.length).toBe(5); // Remaining items on second page
+    expect(employeeService.generateCV).toHaveBeenCalledWith(1);
+    expect(window.URL.createObjectURL).toHaveBeenCalled();
+    expect(window.open).toHaveBeenCalledWith('blob:url');
+  });
+
+  it('should handle error when generating CV', () => {
+    const errorMessage = 'Error generating CV';
+    employeeService.generateCV.and.returnValue(throwError(() => new Error(errorMessage)));
+    
+    component.generateCV(mockEmployees[0]);
+
+    expect(component.error).toBe('Erreur lors de la génération du CV');
   });
 }); 
